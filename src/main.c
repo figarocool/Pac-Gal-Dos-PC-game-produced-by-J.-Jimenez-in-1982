@@ -1,5 +1,33 @@
 #define SDL_MAIN_HANDLED
+#ifdef PACGAL_DOS
+#include <SDL3/SDL.h>
+#undef SDL_KEYDOWN
+#undef SDL_QUIT
+#undef SDL_GetTicks64
+#undef SDL_WINDOW_FULLSCREEN_DESKTOP
+#undef SDLK_a
+#undef SDLK_d
+#undef SDLK_n
+#undef SDLK_p
+#undef SDLK_r
+#undef SDLK_s
+#undef SDLK_w
+#undef SDLK_y
+#define SDL_KEYDOWN SDL_EVENT_KEY_DOWN
+#define SDL_QUIT SDL_EVENT_QUIT
+#define SDL_GetTicks64 SDL_GetTicks
+#define SDL_WINDOW_FULLSCREEN_DESKTOP SDL_WINDOW_FULLSCREEN
+#define SDLK_a SDLK_A
+#define SDLK_d SDLK_D
+#define SDLK_n SDLK_N
+#define SDLK_p SDLK_P
+#define SDLK_r SDLK_R
+#define SDLK_s SDLK_S
+#define SDLK_w SDLK_W
+#define SDLK_y SDLK_Y
+#else
 #include <SDL2/SDL.h>
+#endif
 #include "game.h"
 #include "audio.h"
 #include "speaker.h"
@@ -13,6 +41,9 @@
 #include <string.h>
 #include <assert.h>
 #include <time.h>
+#ifdef PACGAL_DOS
+#include <sys/nearptr.h>
+#endif
 #ifdef VITA
 #include <psp2/ctrl.h>
 #include <psp2/kernel/clib.h>
@@ -75,10 +106,18 @@ static uint32_t original_seed(void) {
  /* Original TIME$ conversion uses 360 for hours, not 3600. */
  return t?(uint32_t)(t->tm_hour*360+t->tm_min*60+t->tm_sec):0;
 }
+#ifndef PACGAL_DOS
 static SDL_AudioDeviceID audio_device;
 static BasicMusic music;
 static Speaker speaker;
 static unsigned audio_channels=1;
+#else
+static SDL_AudioStream *audio_stream;
+static BasicMusic music;
+static Speaker speaker;
+static unsigned audio_channels=1;
+static int16_t audio_scratch[4096];
+#endif
 #ifdef PSP
 #define RASTER_WIDTH 480
 #define RASTER_HEIGHT 272
@@ -86,17 +125,40 @@ static unsigned audio_channels=1;
 #define RASTER_WIDTH 640
 #define RASTER_HEIGHT 200
 #endif
+#ifndef PACGAL_DOS
 static void audio_callback(void *userdata,Uint8 *bytes,int length) {
  (void)userdata;
  speaker_s16(&speaker,(int16_t*)bytes,(size_t)length/(sizeof(int16_t)*audio_channels),audio_channels);
 }
+#else
+static void audio_callback(void *userdata,SDL_AudioStream *stream,int additional_amount,int total_amount) {
+ (void)userdata;(void)total_amount;
+ int frame_bytes=(int)(sizeof(int16_t)*audio_channels);
+ while(additional_amount>0) {
+  int bytes=additional_amount>(int)sizeof(audio_scratch)?(int)sizeof(audio_scratch):additional_amount;
+  bytes-=bytes%frame_bytes;
+  if(bytes<=0)break;
+  speaker_s16(&speaker,audio_scratch,(size_t)bytes/(size_t)frame_bytes,audio_channels);
+  if(!SDL_PutAudioStreamData(stream,audio_scratch,bytes))break;
+  additional_amount-=bytes;
+ }
+}
+#endif
 static void sound(int event) {
  BasicScore score={0};
+#ifdef PACGAL_DOS
+ if(basic_effect(&music,&score,event)||!audio_stream)return;
+ SDL_LockAudioStream(audio_stream);
+ int result=speaker_enqueue(&speaker,&score);
+ SDL_UnlockAudioStream(audio_stream);
+ if(result)fprintf(stderr,"Speaker queue full\n");
+#else
  if(basic_effect(&music,&score,event)||!audio_device)return;
  SDL_LockAudioDevice(audio_device);
  int result=speaker_enqueue(&speaker,&score);
  SDL_UnlockAudioDevice(audio_device);
  if(result)fprintf(stderr,"Speaker queue full\n");
+#endif
 }
 static const unsigned rgb[16]={0x000000,0x0000aa,0x00aa00,0x00aaaa,0xaa0000,0xaa00aa,0xaa5500,0xaaaaaa,0x555555,0x5555ff,0x55ff55,0x55ffff,0xff5555,0xff55ff,0xffff55,0xffffff};
 #ifdef PSP
@@ -331,7 +393,18 @@ int main(int argc,char **argv) {
  #elif defined(PSP)
  sceCtrlSetSamplingMode(PSP_CTRL_MODE_ANALOG);
  #endif
- basic_music_init(&music);SDL_SetMainReady();if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER)<0){fprintf(stderr,"SDL: %s\n",SDL_GetError());return 1;}i18n_init();
+#ifdef PACGAL_DOS
+ if(!__djgpp_nearptr_enable()){fprintf(stderr,"DOS: cannot enable near-pointer access\n");return 1;}
+#endif
+ basic_music_init(&music);
+#ifdef PACGAL_DOS
+ if(!SDL_Init(SDL_INIT_VIDEO)){fprintf(stderr,"SDL: %s\n",SDL_GetError());return 1;}
+ if(!SDL_InitSubSystem(SDL_INIT_AUDIO))fprintf(stderr,"Audio: %s\n",SDL_GetError());
+#else
+ SDL_SetMainReady();if(SDL_Init(SDL_INIT_VIDEO|SDL_INIT_AUDIO|SDL_INIT_TIMER)<0){fprintf(stderr,"SDL: %s\n",SDL_GetError());return 1;}
+#endif
+ i18n_init();
+#ifndef PACGAL_DOS
  SDL_AudioSpec wanted={0},got;
  #ifdef VITA
  wanted.freq=48000;audio_channels=2;
@@ -345,24 +418,43 @@ int main(int argc,char **argv) {
  audio_device=SDL_OpenAudioDevice(NULL,0,&wanted,&got,0);
  if(audio_device)SDL_PauseAudioDevice(audio_device,0);
  else fprintf(stderr,"Audio: %s\n",SDL_GetError());
+#else
+ SDL_AudioSpec wanted={0};wanted.freq=44100;wanted.channels=1;wanted.format=SDL_AUDIO_S16;
+ speaker_video_init(&speaker,(unsigned)wanted.freq,.15f);
+ audio_stream=SDL_OpenAudioDeviceStream(SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,&wanted,audio_callback,NULL);
+ if(audio_stream)SDL_ResumeAudioStreamDevice(audio_stream);
+ else fprintf(stderr,"Audio: %s\n",SDL_GetError());
+#endif
  #ifdef VITA
  const int window_width=960,window_height=544;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
  #elif defined(PSP)
  const int window_width=480,window_height=272;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
+ #elif defined(PACGAL_DOS)
+ const int window_width=640,window_height=480;
  #else
  const int window_width=960,window_height=720;const unsigned window_flags=SDL_WINDOW_RESIZABLE;
  #endif
+#ifdef PACGAL_DOS
+ SDL_Window *w=SDL_CreateWindow(i18n_text(I18N_WINDOW_TITLE),window_width,window_height,SDL_WINDOW_FULLSCREEN);
+#else
  SDL_Window *w=SDL_CreateWindow(i18n_text(I18N_WINDOW_TITLE),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,window_width,window_height,window_flags);
+#endif
  if(!w){fprintf(stderr,"Window: %s\n",SDL_GetError());SDL_Quit();return 1;}
+#ifdef PACGAL_DOS
+ SDL_Renderer *renderer=SDL_CreateRenderer(w,NULL);
+#else
  SDL_Renderer *renderer=SDL_CreateRenderer(w,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
  if(!renderer)renderer=SDL_CreateRenderer(w,-1,SDL_RENDERER_SOFTWARE);
+#endif
  if(!renderer){fprintf(stderr,"Renderer: %s\n",SDL_GetError());SDL_Quit();return 1;}
  #ifdef VITA
  SDL_RenderSetLogicalSize(renderer,960,544);
  #elif defined(PSP)
  SDL_RenderSetLogicalSize(renderer,480,272);
  #endif
+#ifndef PACGAL_DOS
  SDL_RendererInfo render_info={0};SDL_GetRendererInfo(renderer,&render_info);
+#endif
  SDL_Texture *tex=SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,RASTER_WIDTH,RASTER_HEIGHT);
  if(!tex){fprintf(stderr,"Texture: %s\n",SDL_GetError());SDL_Quit();return 1;}
  static uint32_t pixels[RASTER_WIDTH*RASTER_HEIGHT];Game game,display;game_init(&game,seed);
@@ -397,7 +489,11 @@ int main(int argc,char **argv) {
     #endif
    }
    if(e.type!=SDL_KEYDOWN)continue;
+#ifdef PACGAL_DOS
+   SDL_Keycode k=e.key.key;
+#else
    SDL_Keycode k=e.key.keysym.sym;
+#endif
   if(k==SDLK_ESCAPE){
    if(confirm_exit){confirm_exit=0;if(!confirm_from_menu)game_timing_pause(&timing,SDL_GetTicks64(),confirm_resume_paused);continue;}
    confirm_from_menu=!start;confirm_resume_paused=paused||effect_until!=0;confirm_exit=1;
@@ -427,7 +523,13 @@ int main(int argc,char **argv) {
     continue;
    }
    if(k==SDLK_r||(game.ended&&shown_end==2&&(k==SDLK_y||k==SDLK_s))){pending_rng_low=game.rng&255u;if(!fixed_seed)seed=original_seed();screen_blank(&opening);memcpy(opening.ch[24],game.ch[24],80);memcpy(opening.attr[24],game.attr[24],80);if(game.remix){remix_total_dots=0;game_init_remix(&game,seed,(unsigned)game.level);}else game_restart(&game,seed);effect_until=0;paused=0;shown_end=0;remix_next_at=0;game_timing_init(&timing,SDL_GetTicks64(),speed);epoch=0;steps=0;intro=game.remix?0:1;intro_drawn=0;intro_at=SDL_GetTicks64();if(!game.remix)sound(SOUND_INTRO);}
-   if(game.ended&&shown_end==2&&k==SDLK_n){screen_blank(&game);screen_text(&game,0,0,i18n_text(I18N_GOODBYE),7);display=game;raster(&display,pixels,SDL_GetTicks());SDL_UpdateTexture(tex,NULL,pixels,RASTER_WIDTH*4);SDL_RenderClear(renderer);SDL_RenderCopy(renderer,tex,NULL,NULL);SDL_RenderPresent(renderer);running=0;continue;}
+   if(game.ended&&shown_end==2&&k==SDLK_n){screen_blank(&game);screen_text(&game,0,0,i18n_text(I18N_GOODBYE),7);display=game;raster(&display,pixels,SDL_GetTicks());SDL_UpdateTexture(tex,NULL,pixels,RASTER_WIDTH*4);SDL_RenderClear(renderer);
+#ifdef PACGAL_DOS
+   SDL_RenderTexture(renderer,tex,NULL,NULL);
+#else
+   SDL_RenderCopy(renderer,tex,NULL,NULL);
+#endif
+   SDL_RenderPresent(renderer);running=0;continue;}
    if(intro||effect_until||game.ended)continue;
    if(k==SDLK_SPACE||k==SDLK_p){paused=!paused;game_timing_pause(&timing,SDL_GetTicks64(),paused);}
    if(game.ended==1&&game.remix)continue;
@@ -495,22 +597,53 @@ int main(int argc,char **argv) {
   }
   raster(&display,pixels,now);SDL_UpdateTexture(tex,NULL,pixels,RASTER_WIDTH*4);
   SDL_SetRenderDrawColor(renderer,0,0,0,255);SDL_RenderClear(renderer);
-  SDL_Rect view;
+   #ifdef PACGAL_DOS
+   SDL_FRect view;
+   #else
+   SDL_Rect view;
+   #endif
   #ifdef VITA
   view=(SDL_Rect){0,0,960,544};
   #elif defined(PSP)
   view=(SDL_Rect){0,0,480,272};
   #else
+  #ifdef PACGAL_DOS
+  int output_w=0,output_h=0;SDL_GetRenderOutputSize(renderer,&output_w,&output_h);view=(SDL_FRect){0,0,(float)output_w,(float)output_h};
+  #else
   SDL_GetRendererOutputSize(renderer,&view.w,&view.h);view.x=view.y=0;
   #endif
+  #endif
+#ifdef PACGAL_DOS
+  SDL_RenderTexture(renderer,tex,NULL,&view);
+#else
   SDL_RenderCopy(renderer,tex,NULL,&view);SDL_RenderPresent(renderer);
+#endif
+#ifdef PACGAL_DOS
+  SDL_RenderPresent(renderer);
+#endif
   if(frames&&++ticks>=frames)running=0;
+#ifdef PACGAL_DOS
+  SDL_Delay(1);
+#else
   if(!(render_info.flags&SDL_RENDERER_PRESENTVSYNC))SDL_Delay(1);
+#endif
  }
  if(shot) {
+  #ifdef PACGAL_DOS
+  SDL_Surface *surface=SDL_CreateSurfaceFrom(RASTER_WIDTH,RASTER_HEIGHT,SDL_PIXELFORMAT_ARGB8888,pixels,RASTER_WIDTH*4);
+  #else
   SDL_Surface *surface=SDL_CreateRGBSurfaceWithFormatFrom(pixels,RASTER_WIDTH,RASTER_HEIGHT,32,RASTER_WIDTH*4,SDL_PIXELFORMAT_ARGB8888);
+  #endif
+#ifdef PACGAL_DOS
+  if(!surface||!SDL_SaveBMP(surface,shot)){fprintf(stderr,"Screenshot: %s\n",SDL_GetError());return 1;}
+#else
   if(!surface||SDL_SaveBMP(surface,shot)<0){fprintf(stderr,"Screenshot: %s\n",SDL_GetError());return 1;}
+#endif
+  #ifdef PACGAL_DOS
+  SDL_DestroySurface(surface);
+  #else
   SDL_FreeSurface(surface);
+  #endif
  }
  #ifdef VITA
  if(performance_report) {
@@ -523,5 +656,10 @@ int main(int argc,char **argv) {
  #endif
  if(performance_report)profile_printf("Performance: %u frames in %llu ms; max frame %llu ms; stalls >50 ms: %u\n",frame_count,(unsigned long long)(SDL_GetTicks64()-profile_start),(unsigned long long)max_frame,stalls);
  if(timing_report)profile_printf("Timing: %u moves in %llu ms of active play, target %u ms/move\n",steps,(unsigned long long)timing.elapsed_ms,timing.period_ms);
- SDL_CloseAudioDevice(audio_device);SDL_DestroyTexture(tex);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(w);SDL_Quit();return 0;
+#ifndef PACGAL_DOS
+ SDL_CloseAudioDevice(audio_device);
+#else
+ if(audio_stream)SDL_DestroyAudioStream(audio_stream);
+#endif
+ SDL_DestroyTexture(tex);SDL_DestroyRenderer(renderer);SDL_DestroyWindow(w);SDL_Quit();return 0;
 }

@@ -1,7 +1,11 @@
 #include "i18n.h"
 #include <string.h>
 #include <stdlib.h>
+#ifdef PACGAL_DOS
+#include <SDL3/SDL.h>
+#else
 #include <SDL2/SDL.h>
+#endif
 #ifdef VITA
 #include <psp2/apputil.h>
 #include <psp2/system_param.h>
@@ -90,6 +94,15 @@ void i18n_init(void) {
   else active_language=LANG_EN;
  }
 #else
+#ifdef PACGAL_DOS
+ int locale_count=0;SDL_Locale **locales=SDL_GetPreferredLocales(&locale_count);
+ if(locales) {
+  for(int i=0;i<locale_count;i++) {
+   int found=language_id(locales[i]->language);if(found>=0){active_language=found;break;}
+  }
+  SDL_free(locales);
+ }
+#else
  SDL_Locale *locales=SDL_GetPreferredLocales();
  if(locales) {
   for(SDL_Locale *locale=locales;locale->language;locale++) {
@@ -97,6 +110,7 @@ void i18n_init(void) {
   }
   SDL_free(locales);
  }
+#endif
  if(active_language==LANG_EN) {
   const char *environment=getenv("LC_ALL");if(!environment||!*environment)environment=getenv("LC_MESSAGES");
   if(!environment||!*environment)environment=getenv("LANG");

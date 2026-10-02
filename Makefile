@@ -24,6 +24,8 @@ vita:
 	mkdir -p dist
 	cp build-vita/pac-gal.vpk dist/PAC-GAL-PSVita.vpk
 	python3 tools/check_vpk.py
+dos:
+	bash tools/build_dos.sh
 psp:
 	PSPDEV=/usr/local/pspdev /usr/local/pspdev/bin/psp-cmake -S psp -B build-psp -DCMAKE_BUILD_TYPE=Release
 	cmake --build build-psp -j 4
@@ -34,7 +36,7 @@ clean:
 audio-test:
 	$(CC) -Isrc -Itests $(CFLAGS) tests/audio.c src/audio.c -o /tmp/pacgal-audio-test -lm
 	/tmp/pacgal-audio-test
-.PHONY: vita psp deep-test audio-test all test clean differential oracle
+.PHONY: vita psp dos deep-test audio-test all test clean differential oracle
 
 speaker-test:
 	$(CC) -Isrc $(CFLAGS) tests/speaker.c src/speaker.c src/audio.c -o /tmp/pacgal-speaker-test -lm

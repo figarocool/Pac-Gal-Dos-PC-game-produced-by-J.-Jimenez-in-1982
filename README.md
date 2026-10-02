@@ -21,12 +21,13 @@ Il timing non dipende dalla velocità della CPU o dal refresh dello schermo. La 
 - **PC/Linux:** eseguibile SDL2, modalità Normale e Remix, ridimensionamento e schermo intero. Frecce o WASD muovono; Spazio/P mette in pausa; `+`/`-` regolano il ritmo; Esc apre la conferma d'uscita.
 - **PS Vita:** VPK autonomo, display adattato allo schermo e controlli Vita. Select apre la richiesta d'uscita; X conferma e Cerchio annulla. I testi seguono la lingua della console.
 - **PSP/Adrenaline:** `EBOOT.PBP` con icona e immagine di anteprima per il menu PSP. Usa lo schermo 480×272; frecce per muovere, X per confermare, Cerchio per annullare, Start per pausa e Select per la richiesta d'uscita. Italiano e spagnolo seguono la lingua di sistema; le altre lingue usano l'inglese.
+- **DOS/DOSBox:** eseguibile DJGPP a 32 bit, compilato dal port C con backend SDL3 per DOS. Richiede un host DPMI installato separatamente e DOSBox con VGA/VESA e Sound Blaster; la release distribuisce il gioco, non un host DPMI.
 
 Anteprima PSP / PSP menu preview:
 
 ![PAC-GAL PSP preview](psp/preview.png)
 
-I pacchetti compilati si trovano in `dist/` e nella [release GitHub](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). La ricostruzione C non ha un backend DOS e la release non contiene l'eseguibile originale del 1982, che resta soggetto ai diritti del suo autore come specificato in [NOTICE](NOTICE). Gli strumenti che ripetono le prove DOS richiedono una copia locale dell'eseguibile nel percorso indicato da `tools/dos_oracle.py`.
+I pacchetti compilati si trovano in `dist/` e nella [release GitHub](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). La release contiene il port DOSBox della riscrittura C, non l'eseguibile originale del 1982, che resta soggetto ai diritti del suo autore come specificato in [NOTICE](NOTICE). Gli strumenti che ripetono le prove DOS richiedono una copia locale dell'eseguibile nel percorso indicato da `tools/dos_oracle.py`.
 
 ### Compilare e provare
 
@@ -41,6 +42,8 @@ make test
 `make test` esegue i test di regole, labirinto, timing, audio e avvio SDL senza display. `make differential` confronta il gioco con le catture DOS; `make deep-test` verifica introduzione, costruzione della mappa e scenari di gioco. `make oracle` e `python3 tools/audio_oracle.py` interrogano l'eseguibile storico e richiedono DOSBox.
 
 Con VitaSDK e SDL2 in `/usr/local/vitasdk`, `make vita` compila e verifica il VPK. Con PSPSDK e SDL2 in `/usr/local/pspdev`, `make psp` genera `dist/PAC-GAL-PSP-EBOOT.PBP`. Su Vita, il VPK va installato con VitaShell. Per Adrenaline copia l'EBOOT in `ux0:/pspemu/PSP/GAME/PACGAL/EBOOT.PBP`.
+
+Per DOSBox, segui [docs/build-dos.md](docs/build-dos.md): servono DJGPP e una build statica DOS di SDL3. Poi `make dos` genera `dist/PACGAL.EXE`.
 
 La [guida al codice](docs/guida-al-codice.md) descrive moduli, coordinate, caratteri, colori e suoni. La [nota di reverse engineering](docs/reverse-engineering.md) documenta fonti, verifiche e limiti.
 
@@ -70,8 +73,9 @@ Timing does not depend on CPU speed or display refresh. Fidelity was measured ag
 - **PC/Linux:** SDL2 executable with Normal and Remix modes, window resizing, and fullscreen. Arrow keys or WASD move; Space/P pauses; `+`/`-` adjust the pace; Esc opens the exit prompt.
 - **PS Vita:** standalone VPK, display fitted to the screen, and Vita controls. Select opens the exit prompt; X confirms and Circle cancels. Text follows the console language.
 - **PSP/Adrenaline:** `EBOOT.PBP` with an icon and preview image for the PSP menu. It uses the 480×272 screen; D-pad moves, X confirms, Circle cancels, Start pauses, and Select opens the exit prompt. Italian and Spanish follow the system language; other languages use English.
+- **DOS/DOSBox:** 32-bit DJGPP executable built from the C port with SDL3's DOS backend. It requires a separately installed DPMI host and DOSBox with VGA/VESA and Sound Blaster; the release includes the game, not a DPMI host.
 
-Built packages are in `dist/` and the [GitHub release](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). The C recreation has no DOS backend, and the release does not contain the original 1982 executable, which remains subject to its author's rights as described in [NOTICE](NOTICE). Tools that repeat DOS reference runs require a local copy of the executable at the path expected by `tools/dos_oracle.py`.
+Built packages are in `dist/` and the [GitHub release](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). The release contains the DOSBox port of the C recreation, not the original 1982 executable, which remains subject to its author's rights as described in [NOTICE](NOTICE). Tools that repeat DOS reference runs require a local copy of the executable at the path expected by `tools/dos_oracle.py`.
 
 ### Build and test
 
@@ -86,6 +90,8 @@ make test
 `make test` checks game rules, maze logic, timing, audio, and headless SDL startup. `make differential` compares the game against DOS captures; `make deep-test` checks the intro, maze construction, and gameplay scenarios. `make oracle` and `python3 tools/audio_oracle.py` query the historical executable and require DOSBox.
 
 With VitaSDK and SDL2 installed in `/usr/local/vitasdk`, `make vita` builds and validates the VPK. With PSPSDK and SDL2 in `/usr/local/pspdev`, `make psp` creates `dist/PAC-GAL-PSP-EBOOT.PBP`. Install the VPK with VitaShell. For Adrenaline, copy the EBOOT to `ux0:/pspemu/PSP/GAME/PACGAL/EBOOT.PBP`.
+
+For DOSBox, follow [docs/build-dos.md](docs/build-dos.md): DJGPP and a static DOS build of SDL3 are required. Then `make dos` creates `dist/PACGAL.EXE`.
 
 The [code guide](docs/guida-al-codice.md) explains modules, coordinates, characters, colors, and sounds. The [reverse-engineering notes](docs/reverse-engineering.md) describe sources, checks, and limitations.
 
