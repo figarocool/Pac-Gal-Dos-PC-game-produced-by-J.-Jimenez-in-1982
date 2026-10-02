@@ -26,7 +26,7 @@ Anteprima PSP / PSP menu preview:
 
 ![PAC-GAL PSP preview](psp/preview.png)
 
-I pacchetti compilati si trovano in `dist/`. La ROM/eseguibile DOS originale non è incluso: resta soggetto ai diritti del suo autore, come specificato in [NOTICE](NOTICE). Gli strumenti che ripetono le prove DOS richiedono una copia locale dell'eseguibile nel percorso indicato da `tools/dos_oracle.py`.
+I pacchetti compilati si trovano in `dist/` e nella [release GitHub](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). La release offre anche, come file separato, l'eseguibile DOS originale del 1982: non è una build della ricostruzione C e non è coperto dalla sua licenza GPL; resta soggetto ai diritti del suo autore, come specificato in [NOTICE](NOTICE). Gli strumenti che ripetono le prove DOS richiedono una copia locale dell'eseguibile nel percorso indicato da `tools/dos_oracle.py`.
 
 ### Compilare e provare
 
@@ -71,7 +71,7 @@ Timing does not depend on CPU speed or display refresh. Fidelity was measured ag
 - **PS Vita:** standalone VPK, display fitted to the screen, and Vita controls. Select opens the exit prompt; X confirms and Circle cancels. Text follows the console language.
 - **PSP/Adrenaline:** `EBOOT.PBP` with an icon and preview image for the PSP menu. It uses the 480×272 screen; D-pad moves, X confirms, Circle cancels, Start pauses, and Select opens the exit prompt. Italian and Spanish follow the system language; other languages use English.
 
-Built packages are in `dist/`. The original DOS executable is not included: it remains subject to its author's rights, as described in [NOTICE](NOTICE). Tools that repeat DOS reference runs require a local copy of the executable at the path expected by `tools/dos_oracle.py`.
+Built packages are in `dist/` and the [GitHub release](https://github.com/figarocool/Pac-Gal-Dos-PC-game-produced-by-J.-Jimenez-in-1982/releases). The release also offers the original 1982 DOS executable as a separate file: it is not a DOS build of the C recreation and is not covered by its GPL license; it remains subject to its author's rights, as described in [NOTICE](NOTICE). Tools that repeat DOS reference runs require a local copy of the executable at the path expected by `tools/dos_oracle.py`.
 
 ### Build and test
 
