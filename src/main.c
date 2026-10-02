@@ -99,6 +99,28 @@ static void sound(int event) {
  if(result)fprintf(stderr,"Speaker queue full\n");
 }
 static const unsigned rgb[16]={0x000000,0x0000aa,0x00aa00,0x00aaaa,0xaa0000,0xaa00aa,0xaa5500,0xaaaaaa,0x555555,0x5555ff,0x55ff55,0x55ffff,0xff5555,0xff55ff,0xffff55,0xffffff};
+#ifdef PSP
+/* Horizontal coverage for a hinted 6-pixel PSP text cell. Each destination
+   pixel integrates the source glyph pixels it covers, avoiding clipped stems. */
+static unsigned char psp_text_coverage[95][8][6];
+static void psp_font_init(void) {
+ for(int c=0;c<95;c++)for(int y=0;y<8;y++)for(int x=0;x<6;x++) {
+  int left=x*8,right=(x+1)*8,coverage=0;
+  for(int sx=0;sx<8;sx++) {
+   int overlap=(right<(sx+1)*6?right:(sx+1)*6)-(left>sx*6?left:sx*6);
+   if(overlap>0&&(font[c+32][y]&(128>>sx)))coverage+=overlap;
+  }
+  psp_text_coverage[c][y][x]=(unsigned char)coverage;
+ }
+}
+static unsigned psp_blend(unsigned fg,unsigned bg,unsigned coverage) {
+ unsigned inverse=8-coverage;
+ unsigned r=(((fg>>16)&255)*coverage+((bg>>16)&255)*inverse+4)/8;
+ unsigned g=(((fg>>8)&255)*coverage+((bg>>8)&255)*inverse+4)/8;
+ unsigned b=((fg&255)*coverage+(bg&255)*inverse+4)/8;
+ return 0xff000000|(r<<16)|(g<<8)|b;
+}
+#endif
 static void raster(const Game *g,uint32_t *pixels,unsigned time) {
 #ifdef PSP
  for(int y=0;y<25;y++) {
@@ -109,11 +131,15 @@ static void raster(const Game *g,uint32_t *pixels,unsigned time) {
    for(int py=y0;py<y1;py++) {
     int sy=(2*(py-y0)+1)*8/(2*(y1-y0));
     for(int px=0;px<6;px++) {
-     int sx=(2*px+1)*8/12;
      /* The maze uses columns 0..78; column 79 is blank. Half a character
         of padding centers the visible 474-pixel maze in the 480-pixel panel. */
      int dx=3+x*6+px;
-     if(dx<RASTER_WIDTH)pixels[py*RASTER_WIDTH+dx]=0xff000000|((font[c][sy]&(128>>sx))?fg:bg);
+     if(dx<RASTER_WIDTH) {
+      unsigned pixel;
+      if(c>=32&&c<=126)pixel=psp_blend(fg,bg,psp_text_coverage[c-32][sy][px]);
+      else {int sx=(2*px+1)*8/12;pixel=0xff000000|((font[c][sy]&(128>>sx))?fg:bg);}
+      pixels[py*RASTER_WIDTH+dx]=pixel;
+     }
     }
    }
   }
@@ -281,6 +307,9 @@ static int verify(void) {
  puts("OK: timing at 30/60/144 FPS, pause, stalls, speed changes; original maze, 468 dots, 10 special dots, walls, tunnel, power, deaths, eating, victory, simulation.");return 0;
 }
 int main(int argc,char **argv) {
+#ifdef PSP
+ psp_font_init();
+#endif
  int speed=1000,start=0,remix_start=0,frames=0,timing_report=0,performance_report=0,fixed_seed=0;uint32_t seed=original_seed();const char *shot=NULL;
  for(int i=1;i<argc;i++) {
   if(!strcmp(argv[i],"--self-test"))return verify();
