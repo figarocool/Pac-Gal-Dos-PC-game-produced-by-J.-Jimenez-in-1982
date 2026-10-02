@@ -290,13 +290,13 @@ int main(int argc,char **argv) {
  if(audio_device)SDL_PauseAudioDevice(audio_device,0);
  else fprintf(stderr,"Audio: %s\n",SDL_GetError());
  #ifdef VITA
- const int window_height=544;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
+ const int window_width=960,window_height=544;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
  #elif defined(PSP)
- const int window_height=272;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
+ const int window_width=480,window_height=272;const unsigned window_flags=SDL_WINDOW_FULLSCREEN;
  #else
- const int window_height=720;const unsigned window_flags=SDL_WINDOW_RESIZABLE;
+ const int window_width=960,window_height=720;const unsigned window_flags=SDL_WINDOW_RESIZABLE;
  #endif
- SDL_Window *w=SDL_CreateWindow(i18n_text(I18N_WINDOW_TITLE),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,960,window_height,window_flags);
+ SDL_Window *w=SDL_CreateWindow(i18n_text(I18N_WINDOW_TITLE),SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,window_width,window_height,window_flags);
  if(!w){fprintf(stderr,"Window: %s\n",SDL_GetError());SDL_Quit();return 1;}
  SDL_Renderer *renderer=SDL_CreateRenderer(w,-1,SDL_RENDERER_ACCELERATED|SDL_RENDERER_PRESENTVSYNC);
  if(!renderer)renderer=SDL_CreateRenderer(w,-1,SDL_RENDERER_SOFTWARE);
@@ -332,7 +332,14 @@ int main(int argc,char **argv) {
   psp_input(start,game.ended&&shown_end==2,confirm_exit);
   #endif
   SDL_Event e;while(SDL_PollEvent(&e)) {
-   if(e.type==SDL_QUIT)running=0;
+   if(e.type==SDL_QUIT) {
+    #if !defined(PSP)
+    running=0;
+    #else
+    /* PSP SDL can emit a spurious quit while its fullscreen app is active.
+       The PSP build exits through the in-game Select confirmation instead. */
+    #endif
+   }
    if(e.type!=SDL_KEYDOWN)continue;
    SDL_Keycode k=e.key.keysym.sym;
   if(k==SDLK_ESCAPE){
