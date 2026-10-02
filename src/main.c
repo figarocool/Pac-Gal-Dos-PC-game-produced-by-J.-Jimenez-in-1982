@@ -110,7 +110,10 @@ static void raster(const Game *g,uint32_t *pixels,unsigned time) {
     int sy=(py-y0)*8/(y1-y0);
     for(int px=0;px<6;px++) {
      int sx=px*8/6;
-     pixels[py*RASTER_WIDTH+x*6+px]=0xff000000|((font[c][sy]&(128>>sx))?fg:bg);
+     /* The maze uses columns 0..78; column 79 is blank. Half a character
+        of padding centers the visible 474-pixel maze in the 480-pixel panel. */
+     int dx=3+x*6+px;
+     if(dx<RASTER_WIDTH)pixels[py*RASTER_WIDTH+dx]=0xff000000|((font[c][sy]&(128>>sx))?fg:bg);
     }
    }
   }
@@ -356,7 +359,14 @@ int main(int argc,char **argv) {
   psp_input(start,game.ended&&shown_end==2,confirm_exit);
   #endif
   SDL_Event e;while(SDL_PollEvent(&e)) {
-   if(e.type==SDL_QUIT)running=0;
+   if(e.type==SDL_QUIT) {
+    #if defined(PSP)
+    /* SDL on PSP may report a close event without the user requesting exit;
+       Select plus Cross is the explicit exit path on this platform. */
+    #else
+    running=0;
+    #endif
+   }
    if(e.type!=SDL_KEYDOWN)continue;
    SDL_Keycode k=e.key.keysym.sym;
   if(k==SDLK_ESCAPE){
