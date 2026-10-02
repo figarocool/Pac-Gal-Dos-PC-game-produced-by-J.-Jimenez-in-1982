@@ -107,9 +107,9 @@ static void raster(const Game *g,uint32_t *pixels,unsigned time) {
    int a=g->attr[y][x],c=g->ch[y][x];unsigned fg=rgb[a&15],bg=y==24?rgb[0]:rgb[(a>>4)&7];
    if((a&128)&&time%534>=267)fg=bg;
    for(int py=y0;py<y1;py++) {
-    int sy=(py-y0)*8/(y1-y0);
+    int sy=(2*(py-y0)+1)*8/(2*(y1-y0));
     for(int px=0;px<6;px++) {
-     int sx=px*8/6;
+     int sx=(2*px+1)*8/12;
      /* The maze uses columns 0..78; column 79 is blank. Half a character
         of padding centers the visible 474-pixel maze in the 480-pixel panel. */
      int dx=3+x*6+px;
