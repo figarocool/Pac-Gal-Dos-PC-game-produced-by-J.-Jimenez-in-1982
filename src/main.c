@@ -79,6 +79,13 @@ static SDL_AudioDeviceID audio_device;
 static BasicMusic music;
 static Speaker speaker;
 static unsigned audio_channels=1;
+#ifdef PSP
+#define RASTER_WIDTH 480
+#define RASTER_HEIGHT 272
+#else
+#define RASTER_WIDTH 640
+#define RASTER_HEIGHT 200
+#endif
 static void audio_callback(void *userdata,Uint8 *bytes,int length) {
  (void)userdata;
  speaker_s16(&speaker,(int16_t*)bytes,(size_t)length/(sizeof(int16_t)*audio_channels),audio_channels);
@@ -93,12 +100,29 @@ static void sound(int event) {
 }
 static const unsigned rgb[16]={0x000000,0x0000aa,0x00aa00,0x00aaaa,0xaa0000,0xaa00aa,0xaa5500,0xaaaaaa,0x555555,0x5555ff,0x55ff55,0x55ffff,0xff5555,0xff55ff,0xffff55,0xffffff};
 static void raster(const Game *g,uint32_t *pixels,unsigned time) {
+#ifdef PSP
+ for(int y=0;y<25;y++) {
+  int y0=y*RASTER_HEIGHT/25,y1=(y+1)*RASTER_HEIGHT/25;
+  for(int x=0;x<80;x++) {
+   int a=g->attr[y][x],c=g->ch[y][x];unsigned fg=rgb[a&15],bg=y==24?rgb[0]:rgb[(a>>4)&7];
+   if((a&128)&&time%534>=267)fg=bg;
+   for(int py=y0;py<y1;py++) {
+    int sy=(py-y0)*8/(y1-y0);
+    for(int px=0;px<6;px++) {
+     int sx=px*8/6;
+     pixels[py*RASTER_WIDTH+x*6+px]=0xff000000|((font[c][sy]&(128>>sx))?fg:bg);
+    }
+   }
+  }
+ }
+#else
  for(int y=0;y<25;y++)for(int x=0;x<80;x++) {
   int a=g->attr[y][x],c=g->ch[y][x];unsigned fg=rgb[a&15],bg=y==24?rgb[0]:rgb[(a>>4)&7];
   if((a&128)&&time%534>=267)fg=bg;
   for(int yy=0;yy<8;yy++)for(int xx=0;xx<8;xx++)
-   pixels[(y*8+yy)*640+x*8+xx]=0xff000000|((font[c][yy]&(128>>xx))?fg:bg);
+   pixels[(y*8+yy)*RASTER_WIDTH+x*8+xx]=0xff000000|((font[c][yy]&(128>>xx))?fg:bg);
  }
+#endif
 }
 static int verify(void) {
  Game build_source,build_target;screen_blank(&build_source);screen_blank(&build_target);
@@ -307,9 +331,9 @@ int main(int argc,char **argv) {
  SDL_RenderSetLogicalSize(renderer,480,272);
  #endif
  SDL_RendererInfo render_info={0};SDL_GetRendererInfo(renderer,&render_info);
- SDL_Texture *tex=SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,640,200);
+ SDL_Texture *tex=SDL_CreateTexture(renderer,SDL_PIXELFORMAT_ARGB8888,SDL_TEXTUREACCESS_STREAMING,RASTER_WIDTH,RASTER_HEIGHT);
  if(!tex){fprintf(stderr,"Texture: %s\n",SDL_GetError());SDL_Quit();return 1;}
- static uint32_t pixels[640*200];Game game,display;game_init(&game,seed);
+ static uint32_t pixels[RASTER_WIDTH*RASTER_HEIGHT];Game game,display;game_init(&game,seed);
  int selected_mode=remix_start?1:0,paused=0,running=1,fullscreen=0,ticks=0,confirm_exit=0,confirm_resume_paused=0,confirm_from_menu=0;
  if(remix_start)game_init_remix(&game,seed,1);
  uint64_t remix_total_dots=0;
@@ -332,14 +356,7 @@ int main(int argc,char **argv) {
   psp_input(start,game.ended&&shown_end==2,confirm_exit);
   #endif
   SDL_Event e;while(SDL_PollEvent(&e)) {
-   if(e.type==SDL_QUIT) {
-    #if !defined(PSP)
-    running=0;
-    #else
-    /* PSP SDL can emit a spurious quit while its fullscreen app is active.
-       The PSP build exits through the in-game Select confirmation instead. */
-    #endif
-   }
+   if(e.type==SDL_QUIT)running=0;
    if(e.type!=SDL_KEYDOWN)continue;
    SDL_Keycode k=e.key.keysym.sym;
   if(k==SDLK_ESCAPE){
@@ -371,7 +388,7 @@ int main(int argc,char **argv) {
     continue;
    }
    if(k==SDLK_r||(game.ended&&shown_end==2&&(k==SDLK_y||k==SDLK_s))){pending_rng_low=game.rng&255u;if(!fixed_seed)seed=original_seed();screen_blank(&opening);memcpy(opening.ch[24],game.ch[24],80);memcpy(opening.attr[24],game.attr[24],80);if(game.remix){remix_total_dots=0;game_init_remix(&game,seed,(unsigned)game.level);}else game_restart(&game,seed);effect_until=0;paused=0;shown_end=0;remix_next_at=0;game_timing_init(&timing,SDL_GetTicks64(),speed);epoch=0;steps=0;intro=game.remix?0:1;intro_drawn=0;intro_at=SDL_GetTicks64();if(!game.remix)sound(SOUND_INTRO);}
-   if(game.ended&&shown_end==2&&k==SDLK_n){screen_blank(&game);screen_text(&game,0,0,i18n_text(I18N_GOODBYE),7);display=game;raster(&display,pixels,SDL_GetTicks());SDL_UpdateTexture(tex,NULL,pixels,640*4);SDL_RenderClear(renderer);SDL_RenderCopy(renderer,tex,NULL,NULL);SDL_RenderPresent(renderer);running=0;continue;}
+   if(game.ended&&shown_end==2&&k==SDLK_n){screen_blank(&game);screen_text(&game,0,0,i18n_text(I18N_GOODBYE),7);display=game;raster(&display,pixels,SDL_GetTicks());SDL_UpdateTexture(tex,NULL,pixels,RASTER_WIDTH*4);SDL_RenderClear(renderer);SDL_RenderCopy(renderer,tex,NULL,NULL);SDL_RenderPresent(renderer);running=0;continue;}
    if(intro||effect_until||game.ended)continue;
    if(k==SDLK_SPACE||k==SDLK_p){paused=!paused;game_timing_pause(&timing,SDL_GetTicks64(),paused);}
    if(game.ended==1&&game.remix)continue;
@@ -437,7 +454,7 @@ int main(int argc,char **argv) {
    screen_text(&display,24,49,byline,7);
    display.attr[24][79]=7;
   }
-  raster(&display,pixels,now);SDL_UpdateTexture(tex,NULL,pixels,640*4);
+  raster(&display,pixels,now);SDL_UpdateTexture(tex,NULL,pixels,RASTER_WIDTH*4);
   SDL_SetRenderDrawColor(renderer,0,0,0,255);SDL_RenderClear(renderer);
   SDL_Rect view;
   #ifdef VITA
@@ -452,7 +469,7 @@ int main(int argc,char **argv) {
   if(!(render_info.flags&SDL_RENDERER_PRESENTVSYNC))SDL_Delay(1);
  }
  if(shot) {
-  SDL_Surface *surface=SDL_CreateRGBSurfaceWithFormatFrom(pixels,640,200,32,640*4,SDL_PIXELFORMAT_ARGB8888);
+  SDL_Surface *surface=SDL_CreateRGBSurfaceWithFormatFrom(pixels,RASTER_WIDTH,RASTER_HEIGHT,32,RASTER_WIDTH*4,SDL_PIXELFORMAT_ARGB8888);
   if(!surface||SDL_SaveBMP(surface,shot)<0){fprintf(stderr,"Screenshot: %s\n",SDL_GetError());return 1;}
   SDL_FreeSurface(surface);
  }
