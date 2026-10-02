@@ -1,0 +1,24 @@
+{
+  "reference": "scipy.signal.butter(3), independently designed HP120 / LP4300",
+  "rates": [
+    {
+      "rate": 44100,
+      "max_complex_response_error": 0.0002228810329579339,
+      "gain_db_at_120_1000_4300_hz": [
+        -3.0102579400049523,
+        -0.0005473076354005004,
+        -3.010301045592925
+      ]
+    },
+    {
+      "rate": 48000,
+      "max_complex_response_error": 0.00022271804924330486,
+      "gain_db_at_120_1000_4300_hz": [
+        -3.010241812830268,
+        -0.0006426715130852152,
+        -3.010300677342845
+      ]
+    }
+  ],
+  "passed": true
+}

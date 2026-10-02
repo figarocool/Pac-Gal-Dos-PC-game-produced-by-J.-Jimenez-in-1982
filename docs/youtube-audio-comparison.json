@@ -1,0 +1,30 @@
+{
+  "url": "https://www.youtube.com/watch?v=VyXFxRq3k5Q",
+  "title": "Pac Gal gameplay (PC Game, 1982)",
+  "duration_seconds": 288,
+  "source_description": "Played through Dosbox emulation platform. Recorded with original sound.",
+  "finding": "The empty-cell 150 Hz effects can last tens of ms; resetting each note to nominal 3*2048 PIT clocks misses the already scheduled slow IRQ0.",
+  "timing_reference": "https://github.com/dosbox-staging/dosbox-staging/blob/v0.75.0/src/hardware/timer.cpp",
+  "runtime_evidence": "Original runtime 1F53..1F5A writes 2048 to port 40 without a new control word; 1B88..1BA4 disables speaker and restores count 65536.",
+  "recording_decay_fits": [
+    {
+      "interval_seconds": [
+        43.295,
+        43.39
+      ],
+      "tau_seconds": 0.061697,
+      "equivalent_high_pass_hz": 2.57962
+    },
+    {
+      "interval_seconds": [
+        43.465,
+        43.56
+      ],
+      "tau_seconds": 0.056344,
+      "equivalent_high_pass_hz": 2.8247
+    }
+  ],
+  "change": "Keep pending IRQ0 across count changes; later sound ticks at divisor 2048, idle ticks at 65536. Default audio uses a 3 Hz first-order DC blocker fitted approximately to this recording, LP4300 retained. Original HP120 small-speaker profile remains available for tests.",
+  "limitations": "Recording uses DOSBox and lossy YouTube Opus, not a physical IBM measurement. Response profile is approximate; no claim of sample-exact agreement with the video.",
+  "tests": "44.1/48 kHz pending first IRQ at 2048 and 65536 clocks, duration bound, phase reload, callback invariance, effects/maze regressions pass."
+}

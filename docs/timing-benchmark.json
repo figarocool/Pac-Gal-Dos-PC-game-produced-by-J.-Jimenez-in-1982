@@ -1,0 +1,23 @@
+[
+  {
+    "dosbox_cycles": 300,
+    "original_speed": 6000,
+    "repeats": 4,
+    "bios_ticks": 24,
+    "delay_ms_per_step": 329.6
+  },
+  {
+    "dosbox_cycles": 1000,
+    "original_speed": 6000,
+    "repeats": 4,
+    "bios_ticks": 7,
+    "delay_ms_per_step": 96.1
+  },
+  {
+    "dosbox_cycles": 3000,
+    "original_speed": 6000,
+    "repeats": 4,
+    "bios_ticks": 3,
+    "delay_ms_per_step": 41.2
+  }
+]

@@ -1,0 +1,9 @@
+{
+  "cycles": 300,
+  "death_ms": 329.5524,
+  "eat_ms": 164.7762,
+  "first-intro-pass": 164.77620000000002,
+  "complete-intro": 933.7318,
+  "intro-plus-construction": 2142.0906,
+  "construction_ms": 1208.3588
+}
