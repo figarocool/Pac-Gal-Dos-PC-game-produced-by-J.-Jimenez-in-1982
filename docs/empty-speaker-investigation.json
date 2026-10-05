@@ -1,0 +1,39 @@
+{
+  "original_effect": {
+    "frequency_hz": 150,
+    "runtime_duration_ticks": 3,
+    "tick_pit_clocks": 2048,
+    "nominal_duration_ms": 5.149264989356174
+  },
+  "hardware": {
+    "sound_device": "PC internal speaker",
+    "tone_channel": 2,
+    "control_port": "0x43",
+    "tone_data_port": "0x42",
+    "speaker_gate_port": "0x61",
+    "duration_interrupt": "IRQ0 / INT 08h",
+    "timer_channel_0_divisor": 2048
+  },
+  "recording": {
+    "source": "Original executable SOUND runtime in DOSBox 0.74-3; instrumentation logs arguments; temporary copy waits after final effect to permit recording",
+    "file": "docs/original-empty-speaker.wav",
+    "sample_rate": 48000,
+    "observed": "DOSBox recording shows state-dependent phase and speaker-disable transitions. Version 01.03 adds a stateful PIT/gate and acoustic-response model; raw PIT reference remains separate for parser tests.",
+    "limitation": "DOSBox output is an emulation, not a measurement of an IBM 5150 speaker or Vita speakers."
+  },
+  "runtime_changes": true,
+  "simulation_version": "01.03",
+  "model": {
+    "gate_off": "low output, with acoustic decay",
+    "count_reload": "at half-period edge, preserving phase while enabled",
+    "rest_divisor": 2,
+    "acoustic_response": "3rd-order Butterworth high-pass 120 Hz and low-pass 4300 Hz",
+    "response_source": "https://github.com/dosbox-staging/dosbox-staging/blob/main/src/hardware/audio/pcspeaker_impulse.cpp",
+    "limitation": "Representative small PC-speaker response, not measurement of an individual IBM 5150. Nominal score durations retained; exact initial DOS IRQ phase not reproduced."
+  },
+  "listening_examples": {
+    "before": "docs/empty-wall-before.wav",
+    "after": "docs/empty-wall-after.wav",
+    "order": "Three empty-cell impulses followed by three wall impulses; 0.5 s between events."
+  }
+}

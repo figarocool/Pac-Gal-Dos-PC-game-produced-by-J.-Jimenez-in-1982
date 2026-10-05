@@ -1,0 +1,55 @@
+{
+  "video": "https://www.youtube.com/watch?v=2ZmQ5DXRr_Q",
+  "title": "Pac-Gal \u00a9 1982 J. Jimenez - PC DOS - Gameplay",
+  "displayed_speed": 1000,
+  "video_frame_rate": 30,
+  "audio_sample_rate": 48000,
+  "method": "Download audio from YouTube, convert to mono 48 kHz; calculate 10 ms RMS and detect movement-effect peaks (threshold 0.14, min prominence 0.025, min spacing 80 ms).",
+  "windows_seconds": [
+    {
+      "interval": [
+        14,
+        24
+      ],
+      "peaks": 29,
+      "median_peak_interval_ms": 350.0,
+      "mean_ms": 348.6,
+      "p10_p90_ms": [
+        337.0,
+        360.0
+      ]
+    },
+    {
+      "interval": [
+        24,
+        34
+      ],
+      "peaks": 29,
+      "median_peak_interval_ms": 335.0,
+      "mean_ms": 337.5,
+      "p10_p90_ms": [
+        300.0,
+        360.0
+      ]
+    },
+    {
+      "interval": [
+        34,
+        44
+      ],
+      "peaks": 28,
+      "median_peak_interval_ms": 340.0,
+      "mean_ms": 334.4,
+      "p10_p90_ms": [
+        300.0,
+        360.0
+      ]
+    }
+  ],
+  "inference": "One repeated game sound event coincides with each player turn in these sections; timing remains approximate from compressed video audio.",
+  "previous_port_step_ms": 450,
+  "video_like_step_ms": 350,
+  "previous_value_1000_ms": 175,
+  "new_value_1000_ms": 350,
+  "ghosts": "The source updates all four ghosts once in each player turn; a ghost-eat animation pauses gameplay for about 165 ms."
+}

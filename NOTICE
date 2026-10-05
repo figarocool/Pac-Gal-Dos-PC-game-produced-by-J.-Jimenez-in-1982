@@ -1,0 +1,6 @@
+Native C implementation: GPL-2.0-or-later.
+Embedded IBM-compatible 8x8 font: extracted from DOSBox 0.74-3 BIOS font,
+Copyright DOSBox Team, GPL-2.0-or-later. Full license in LICENSE.
+Historical reference: PAC-GAL by Al J. Jiménez, May 1982.
+The original DOS executable is not relicensed under the license of the
+native implementation.

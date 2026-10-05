@@ -1,0 +1,52 @@
+{
+  "vpk": "dist/PAC-GAL-PSVita.vpk",
+  "bytes": 701127,
+  "sha256": "96e860e2189672df47dd99127d1cd9b8e6c75ae0130bc9128b8ede4652f993d0",
+  "title_id": "PACG19820",
+  "version": "01.17",
+  "zip_crc": "passed",
+  "self_header": "passed",
+  "images": {
+    "sce_sys/icon0.png": {
+      "width": 128,
+      "height": 128,
+      "depth": 8,
+      "color_type": 3,
+      "palette_colors": 256,
+      "chunks": [
+        "IHDR",
+        "PLTE",
+        "IDAT",
+        "IEND"
+      ]
+    },
+    "sce_sys/livearea/contents/bg.png": {
+      "width": 840,
+      "height": 500,
+      "depth": 8,
+      "color_type": 3,
+      "palette_colors": 256,
+      "chunks": [
+        "IHDR",
+        "PLTE",
+        "IDAT",
+        "IEND"
+      ]
+    },
+    "sce_sys/livearea/contents/startup.png": {
+      "width": 280,
+      "height": 158,
+      "depth": 8,
+      "color_type": 3,
+      "palette_colors": 256,
+      "chunks": [
+        "IHDR",
+        "PLTE",
+        "IDAT",
+        "IEND"
+      ]
+    }
+  },
+  "livearea_xml": "passed",
+  "hardware_test": false
+}

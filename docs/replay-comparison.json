@@ -1,0 +1,17 @@
+[
+  {
+    "case": "ghost-collision-False-1",
+    "before_after": "identical",
+    "sha256": "cc5359061df3a44c12ca31196b83bc3df05a51d741f14f5b8896ab61ed3f291c"
+  },
+  {
+    "case": "last-life",
+    "before_after": "identical",
+    "sha256": "1b0c9c90a358cb863f4d4819df7af80cd440c0ecc1f85e81e199ae40fb81a28f"
+  },
+  {
+    "case": "replay",
+    "before_after": "identical",
+    "sha256": "08d9fb0436f5755a46e556e2dfe39c4567ef664e2828f6a25301b4ce33f3856f"
+  }
+]
